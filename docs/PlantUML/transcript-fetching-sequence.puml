@@ -1,0 +1,190 @@
+@startuml Transcript Fetching Sequence
+!theme plain
+title YouTube Transcript Fetching - Detailed Sequence
+
+participant "MCP Client" as Client
+participant "HTTP Server" as Server
+participant "MCP Server" as MCPServer
+participant "YouTube Service" as YouTubeService
+participant "Rate Limiter" as RateLimiter
+participant "Proxy Manager" as ProxyManager
+participant "Cache" as Cache
+participant "YouTube API" as YouTubeAPI
+participant "Transcript Parser" as Parser
+
+== Request Initiation ==
+Client -> Server: POST /mcp (get_transcript)
+activate Server
+note right: cmd/server/main.go:45-60
+Server -> MCPServer: JSON-RPC Request
+activate MCPServer
+note right: internal/mcp/server.go:151-180
+
+MCPServer -> MCPServer: Validate Request Schema
+note right: internal/mcp/server.go:152-165
+MCPServer -> YouTubeService: Execute get_transcript
+activate YouTubeService
+note right: internal/youtube/service.go:122-130
+
+== Rate Limiting Check ==
+YouTubeService -> RateLimiter: Check Rate Limits
+activate RateLimiter
+note right: internal/youtube/service.go:1022-1069
+RateLimiter -> RateLimiter: Check per-minute limit
+note right: internal/youtube/service.go:1044-1062
+RateLimiter -> RateLimiter: Check per-hour limit
+note right: internal/youtube/service.go:1065-1067
+RateLimiter -> RateLimiter: Check adaptive backoff
+note right: internal/youtube/service.go:1028-1041
+alt Rate Limited
+  RateLimiter -> YouTubeService: Rate Limit Exceeded
+  YouTubeService -> MCPServer: Rate Limit Error
+  MCPServer -> Client: Error Response
+  deactivate YouTubeService
+  deactivate RateLimiter
+  deactivate MCPServer
+  deactivate Server
+else Rate Limit OK
+  RateLimiter -> YouTubeService: Proceed
+  deactivate RateLimiter
+end
+
+== Cache Check ==
+YouTubeService -> Cache: Check Cache Key
+activate Cache
+note right: internal/youtube/service.go:133
+Cache -> Cache: Generate cache key (video_id + language)
+note right: internal/cache/memory.go:38-57
+Cache -> YouTubeService: Cache Result
+deactivate Cache
+
+alt Cache Hit
+  YouTubeService -> MCPServer: Cached Transcript
+  MCPServer -> Client: Transcript Response
+  deactivate YouTubeService
+  deactivate MCPServer
+  deactivate Server
+else Cache Miss
+  note right: Continue to fetch from YouTube
+end
+
+== Proxy Selection ==
+YouTubeService -> ProxyManager: Get Next Proxy
+activate ProxyManager
+note right: internal/youtube/service.go:1268-1280
+ProxyManager -> ProxyManager: Rotate proxy list
+note right: internal/youtube/service.go:1276-1277
+ProxyManager -> YouTubeService: Selected Proxy
+deactivate ProxyManager
+
+== YouTube Data Fetching ==
+YouTubeService -> YouTubeAPI: GET /watch?v={video_id}
+activate YouTubeAPI
+note right: internal/youtube/service.go:437-500
+note right: User-Agent: Custom browser string
+YouTubeAPI -> YouTubeService: HTML Response
+deactivate YouTubeAPI
+
+YouTubeService -> Parser: Parse HTML
+activate Parser
+note right: internal/youtube/service.go:503-544
+Parser -> Parser: Extract ytInitialPlayerResponse
+note right: internal/youtube/service.go:509-513
+Parser -> Parser: Parse JSON player response
+note right: internal/youtube/service.go:515-518
+Parser -> YouTubeService: Video Metadata
+deactivate Parser
+
+== Caption Track Selection ==
+YouTubeService -> YouTubeService: Extract Caption Tracks
+note right: internal/youtube/service.go:163-170
+YouTubeService -> YouTubeService: Apply Language Preferences
+note right: internal/youtube/service.go:173-180
+YouTubeService -> YouTubeService: Select Best Track
+note right: internal/youtube/service.go:173-180
+
+alt No Captions Available
+  YouTubeService -> MCPServer: No Transcript Error
+  MCPServer -> Client: Error Response
+  deactivate YouTubeService
+  deactivate MCPServer
+  deactivate Server
+else Captions Found
+  note right: Continue to fetch caption XML
+end
+
+== Caption XML Fetching ==
+YouTubeService -> YouTubeAPI: GET Caption XML URL
+activate YouTubeAPI
+note right: internal/youtube/service.go:650-688
+note right: Using selected proxy
+YouTubeAPI -> YouTubeService: Caption XML
+deactivate YouTubeAPI
+
+== XML Parsing ==
+YouTubeService -> Parser: Parse Caption XML
+activate Parser
+note right: internal/youtube/service.go:698-803
+Parser -> Parser: Handle <transcript> format
+note right: internal/youtube/service.go:745-750
+Parser -> Parser: Handle <timedtext> format
+note right: internal/youtube/service.go:752-783
+Parser -> Parser: Extract text segments
+note right: internal/youtube/service.go:805-820
+Parser -> Parser: Calculate timestamps
+note right: internal/youtube/service.go:805-820
+Parser -> YouTubeService: Parsed Transcript
+deactivate Parser
+
+== Response Assembly ==
+YouTubeService -> YouTubeService: Format Transcript
+note right: internal/youtube/service.go:200-250
+YouTubeService -> YouTubeService: Calculate Statistics
+note right: internal/youtube/service.go:200-250
+YouTubeService -> YouTubeService: Add Metadata
+note right: internal/youtube/service.go:200-250
+
+== Cache Storage ==
+YouTubeService -> Cache: Store Transcript
+activate Cache
+note right: internal/youtube/service.go:200-250
+Cache -> Cache: Set TTL (24 hours)
+note right: internal/cache/memory.go:61-81
+Cache -> YouTubeService: Stored
+deactivate Cache
+
+== Response Return ==
+YouTubeService -> MCPServer: Transcript Response
+deactivate YouTubeService
+note right: internal/mcp/server.go:180-200
+MCPServer -> Client: JSON-RPC Response
+deactivate MCPServer
+deactivate Server
+
+== Error Handling ==
+alt Network Error
+  YouTubeService -> YouTubeService: Handle Network Error
+  note right: internal/youtube/service.go:1235-1264
+  YouTubeService -> RateLimiter: Update Failure State
+  note right: internal/youtube/service.go:1092-1120
+  YouTubeService -> MCPServer: Network Error
+  MCPServer -> Client: Error Response
+end
+
+alt Parse Error
+  YouTubeService -> YouTubeService: Handle Parse Error
+  note right: internal/youtube/service.go:790-794
+  YouTubeService -> MCPServer: Parse Error
+  MCPServer -> Client: Error Response
+end
+
+alt Rate Limit Hit
+  YouTubeService -> RateLimiter: Update Failure State
+  note right: internal/youtube/service.go:1092-1120
+  YouTubeService -> YouTubeService: Exponential Backoff
+  note right: internal/youtube/service.go:1107-1112
+  YouTubeService -> MCPServer: Rate Limit Error
+  MCPServer -> Client: Rate Limit Error
+end
+
+@enduml

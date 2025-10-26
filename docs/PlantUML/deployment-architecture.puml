@@ -1,0 +1,110 @@
+@startuml Deployment Architecture
+!theme plain
+title YouTube MCP Server - Deployment Architecture
+
+package "Development Environment" {
+  [Developer Machine] as DevMachine
+  [Go Runtime] as GoRuntime
+  [Hot Reload (air)] as HotReload
+  [Local Testing] as LocalTest
+}
+
+package "Production Environment" {
+  package "Docker Container" {
+    [YouTube MCP Server] as Server
+    [Go Binary] as Binary
+    [Configuration] as Config
+    [Health Check] as Health
+  }
+  
+  package "Optional Services" {
+    [Redis Cache] as Redis
+    [Prometheus] as Prometheus
+    [Grafana] as Grafana
+  }
+}
+
+package "External Services" {
+  [YouTube API] as YouTubeAPI
+  [Proxy Servers] as Proxies
+  [MCP Clients] as MCPClients
+}
+
+package "Infrastructure" {
+  [Docker Compose] as DockerCompose
+  [Load Balancer] as LoadBalancer
+  [Reverse Proxy] as ReverseProxy
+  [Monitoring Stack] as Monitoring
+}
+
+' Development Flow
+DevMachine --> GoRuntime : go run
+DevMachine --> HotReload : make dev
+DevMachine --> LocalTest : make test
+
+' Production Deployment
+DockerCompose --> Server : docker-compose up
+Server --> Binary : Executable
+Server --> Config : Environment Variables
+Server --> Health : Health Checks
+
+' Service Dependencies
+Server --> Redis : Cache (Optional)
+Server --> YouTubeAPI : Video Data
+Server --> Proxies : Proxy Rotation
+
+' Monitoring
+Server --> Prometheus : Metrics
+Prometheus --> Grafana : Visualization
+Monitoring --> Server : Health Monitoring
+
+' Client Connections
+MCPClients --> Server : MCP Protocol
+MCPClients --> LoadBalancer : HTTP Requests
+LoadBalancer --> ReverseProxy : Route Traffic
+ReverseProxy --> Server : Forward Requests
+
+' Docker Profiles
+note top of DockerCompose
+  Three deployment profiles:
+  1. Default: Basic server
+  2. with-redis: Server + Redis
+  3. monitoring: Server + Redis + Prometheus + Grafana
+end note
+
+' Configuration Sources
+note right of Config
+  Environment Variables:
+  - LOG_LEVEL
+  - YOUTUBE_DEFAULT_LANGUAGES
+  - CACHE_TYPE (memory/redis)
+  - SECURITY_ENABLE_AUTH
+  - USER_AGENT
+  - CACHE_TRANSCRIPT_TTL
+  - METRICS_ENABLED
+  - YOUTUBE_RATE_LIMIT_PER_MINUTE
+  - YOUTUBE_PROXY_LIST
+  - SERVER_ENABLE_CORS
+  - SERVER_ENABLE_GZIP
+  - SECURITY_ENABLE_RATE_LIMIT
+end note
+
+' Health Check Endpoints
+note bottom of Health
+  Health Check Endpoints:
+  - /health: Overall system health
+  - /ready: Readiness check
+  - /metrics: Prometheus metrics
+  - /stats: Application statistics
+end note
+
+' Port Configuration
+note left of Server
+  Ports:
+  - 8080: HTTP Server
+  - 9090: Metrics (if enabled)
+  - 6379: Redis (if enabled)
+  - 3000: Grafana (if enabled)
+end note
+
+@enduml

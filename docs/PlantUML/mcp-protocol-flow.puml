@@ -1,0 +1,101 @@
+@startuml MCP Protocol Flow
+!theme plain
+title MCP Protocol Request/Response Flow
+
+participant "MCP Client" as Client
+participant "HTTP Server" as Server
+participant "MCP Server" as MCPServer
+participant "Tool Registry" as Registry
+participant "YouTube Service" as YouTubeService
+participant "Cache" as Cache
+participant "YouTube API" as YouTubeAPI
+
+== Initialization ==
+Client -> Server: POST /mcp
+activate Server
+Server -> MCPServer: JSON-RPC Request
+activate MCPServer
+
+alt Initialize Request
+  MCPServer -> MCPServer: Validate JSON-RPC 2.0
+  MCPServer -> MCPServer: Check Method (initialize)
+  MCPServer -> Client: Server Capabilities
+  note right: Returns server info, tools, version
+end
+
+== Tool Discovery ==
+Client -> Server: POST /mcp
+Server -> MCPServer: tools/list request
+MCPServer -> Registry: Get Available Tools
+activate Registry
+Registry -> MCPServer: Tool Definitions
+deactivate Registry
+MCPServer -> Client: Tool List Response
+note right: 5 tools: get_transcript, get_multiple_transcripts,\ntranslate_transcript, format_transcript,\nlist_available_languages
+
+== Tool Execution ==
+Client -> Server: POST /mcp
+Server -> MCPServer: tools/call request
+activate MCPServer
+
+MCPServer -> MCPServer: Validate Tool Name
+MCPServer -> MCPServer: Validate Arguments Schema
+MCPServer -> Registry: Route to Tool Handler
+activate Registry
+
+Registry -> YouTubeService: Execute Tool
+activate YouTubeService
+
+alt get_transcript
+  YouTubeService -> Cache: Check Cache
+  activate Cache
+  Cache -> YouTubeService: Cache Miss/Hit
+  deactivate Cache
+  
+  alt Cache Miss
+    YouTubeService -> YouTubeAPI: Fetch Video Data
+    activate YouTubeAPI
+    YouTubeAPI -> YouTubeService: HTML Response
+    deactivate YouTubeAPI
+    
+    YouTubeService -> YouTubeService: Parse ytInitialPlayerResponse
+    YouTubeService -> YouTubeService: Extract Caption Tracks
+    YouTubeService -> YouTubeAPI: Fetch Caption XML
+    activate YouTubeAPI
+    YouTubeAPI -> YouTubeService: Caption XML
+    deactivate YouTubeAPI
+    
+    YouTubeService -> YouTubeService: Parse XML Transcript
+    YouTubeService -> Cache: Store in Cache
+    activate Cache
+    Cache -> YouTubeService: Stored
+    deactivate Cache
+  end
+  
+  YouTubeService -> Registry: Transcript Response
+  deactivate YouTubeService
+end
+
+Registry -> MCPServer: Tool Result
+deactivate Registry
+MCPServer -> Client: JSON-RPC Response
+deactivate MCPServer
+deactivate Server
+
+== Error Handling ==
+alt Error Scenarios
+  MCPServer -> MCPServer: Validate Request
+  note right: Invalid JSON-RPC, missing params, etc.
+  MCPServer -> Client: Error Response
+  note right: Standard JSON-RPC 2.0 error codes
+end
+
+alt Tool Execution Error
+  YouTubeService -> YouTubeService: Handle YouTube API Errors
+  YouTubeService -> YouTubeService: Rate Limiting
+  YouTubeService -> Registry: Error Response
+  Registry -> MCPServer: Error Result
+  MCPServer -> Client: Error Response
+end
+
+@enduml

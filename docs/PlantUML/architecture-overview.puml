@@ -1,0 +1,78 @@
+@startuml Architecture Overview
+!theme plain
+title YouTube MCP Server - Overall Architecture
+
+package "Client Layer" {
+  [MCP Client] as Client
+  [HTTP Client] as HTTPClient
+}
+
+package "Entry Point Layer" {
+  [main.go] as Main
+  [Middleware Pipeline] as Middleware
+  note right of Middleware
+    RequestID, RealIP, Recoverer
+    Timeout, Logging, Metrics
+    CORS, Compression, Rate Limiting
+    Authentication
+  end note
+}
+
+package "Protocol Layer" {
+  [MCP Server] as MCPServer
+  [JSON-RPC 2.0 Handler] as JSONRPC
+  [Tool Registry] as ToolRegistry
+  [Request Router] as Router
+}
+
+package "Business Logic Layer" {
+  [YouTube Service] as YouTubeService
+  [Transcript Fetcher] as Fetcher
+  [Rate Limiter] as RateLimiter
+  [Proxy Manager] as ProxyManager
+}
+
+package "Infrastructure Layer" {
+  [Cache Interface] as CacheInterface
+  [Memory Cache] as MemoryCache
+  [Redis Cache] as RedisCache
+  [Health Checker] as HealthChecker
+  [Configuration] as Config
+}
+
+package "External Services" {
+  [YouTube API] as YouTubeAPI
+  [Proxy Servers] as Proxies
+}
+
+' Connections
+Client --> Main : MCP Protocol
+HTTPClient --> Main : HTTP Requests
+Main --> Middleware : Request Processing
+Middleware --> MCPServer : Processed Requests
+
+MCPServer --> JSONRPC : Protocol Handling
+JSONRPC --> ToolRegistry : Tool Resolution
+ToolRegistry --> Router : Route to Handler
+Router --> YouTubeService : Business Logic
+
+YouTubeService --> Fetcher : Transcript Extraction
+YouTubeService --> RateLimiter : Rate Control
+YouTubeService --> ProxyManager : Proxy Rotation
+YouTubeService --> CacheInterface : Caching
+
+CacheInterface --> MemoryCache : In-Memory Storage
+CacheInterface --> RedisCache : Distributed Cache
+
+YouTubeService --> YouTubeAPI : Video Data
+ProxyManager --> Proxies : Proxy Rotation
+
+HealthChecker --> CacheInterface : Cache Health
+HealthChecker --> YouTubeService : Service Health
+HealthChecker --> YouTubeAPI : Network Health
+
+Config --> Main : Configuration
+Config --> YouTubeService : Service Config
+Config --> CacheInterface : Cache Config
+
+@enduml

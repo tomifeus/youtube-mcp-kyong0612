@@ -1,0 +1,13 @@
+---
+globs: *.puml
+alwaysApply: false
+---
+When creating PlantUML diagrams, always follow the APIs on https://plantuml.com/.
+
+Only create one diagram style per file as the PlantUML API does not support multiple different diagrams in one file.
+
+When asked to create UML diagrams without specifying the exact type, create
+
+1. Component diagram (https://plantuml.com/component-diagram)
+2. Sequence diagram (https://plantuml.com/sequence-diagram)
+3. Activity diagram (https://plantuml.com/activity-diagram-beta)

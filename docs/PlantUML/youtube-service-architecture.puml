@@ -1,0 +1,161 @@
+@startuml YouTube Service Architecture
+!theme plain
+title YouTube Service Internal Architecture
+
+package "YouTube Service" {
+  class Service {
+    -cache: Cache
+    -httpClient: *http.Client
+    -rateLimiter: *rate.Limiter
+    -hourlyLimiter: *rate.Limiter
+    -proxyManager: *ProxyManager
+    -logger: *slog.Logger
+    -rateLimitState: *RateLimitState
+    -config: YouTubeConfig
+    --
+    +GetTranscript()
+    +GetMultipleTranscripts()
+    +TranslateTranscript()
+    +FormatTranscript()
+    +ListAvailableLanguages()
+  }
+
+  class RateLimitState {
+    -lastFailureTime: time.Time
+    -backoffUntil: time.Time
+    -consecutiveFailures: int
+    -adaptiveMultiplier: float64
+    -mu: sync.RWMutex
+    --
+    +UpdateFailure()
+    +UpdateSuccess()
+    +ShouldBackoff(): bool
+    +GetBackoffDuration(): time.Duration
+  }
+
+  class ProxyManager {
+    -proxies: []string
+    -currentIndex: int
+    -mu: sync.Mutex
+    --
+    +GetNextProxy(): string
+    +RotateProxy()
+    +GetProxyCount(): int
+  }
+
+  class CompositeFetcher {
+    -fetchers: []TranscriptFetcher
+    --
+    +FetchTranscript()
+    +AddFetcher()
+  }
+
+  class DefaultFetcher {
+    -httpClient: *http.Client
+    -userAgent: string
+    --
+    +FetchTranscript()
+    +extractVideoID()
+    +parseYouTubePage()
+    +extractCaptionTracks()
+    +fetchCaptionXML()
+    +parseTranscriptXML()
+  }
+
+  class TranscriptFetcher {
+    <<interface>>
+    +FetchTranscript()
+  }
+}
+
+package "Data Models" {
+  class TranscriptResponse {
+    +VideoID: string
+    +Title: string
+    +Description: string
+    +Language: string
+    +TranscriptType: string
+    +FormattedText: string
+    +Transcript: []TranscriptSegment
+    +Metadata: TranscriptMetadata
+    +WordCount: int
+    +CharCount: int
+    +DurationSeconds: float64
+  }
+
+  class TranscriptSegment {
+    +Text: string
+    +Start: float64
+    +Duration: float64
+    +End: float64
+  }
+
+  class TranscriptMetadata {
+    +ExtractionTimestamp: time.Time
+    +LanguageDetected: string
+    +Source: string
+    +ChannelID: string
+    +ChannelName: string
+    +PublishedAt: string
+    +Confidence: float64
+    +ViewCount: int64
+    +LikeCount: int64
+    +CommentCount: int64
+  }
+}
+
+package "External Dependencies" {
+  class Cache {
+    <<interface>>
+    +Get()
+    +Set()
+    +Delete()
+    +Clear()
+  }
+
+  class YouTubeAPI {
+    +FetchVideoPage()
+    +FetchCaptionXML()
+  }
+}
+
+' Relationships
+Service --> RateLimitState : manages
+Service --> ProxyManager : uses
+Service --> CompositeFetcher : delegates to
+Service --> Cache : stores/retrieves
+Service --> TranscriptResponse : returns
+
+CompositeFetcher --> TranscriptFetcher : implements
+DefaultFetcher --> TranscriptFetcher : implements
+DefaultFetcher --> YouTubeAPI : calls
+
+TranscriptResponse --> TranscriptSegment : contains
+TranscriptResponse --> TranscriptMetadata : contains
+
+Service --> RateLimitState : adaptive rate limiting
+Service --> ProxyManager : proxy rotation
+Service --> Cache : caching strategy
+
+note top of Service
+  Core service handling YouTube transcript operations
+  with adaptive rate limiting, proxy rotation,
+  and multi-language support
+end note
+
+note right of RateLimitState
+  Tracks rate limiting state for adaptive behavior
+  with exponential backoff on failures
+end note
+
+note right of ProxyManager
+  Manages proxy rotation for distributed requests
+  to avoid rate limiting
+end note
+
+note bottom of CompositeFetcher
+  Composite pattern for multiple fetch strategies
+  with fallback mechanisms
+end note
+
+@enduml
