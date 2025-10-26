@@ -124,10 +124,10 @@ The system follows a clean layered architecture:
 npm install -g @plantuml/plantuml
 
 # Generate PNG images
-plantuml docs/*.puml
+plantuml docs/PlantUML/*.puml
 
 # Generate SVG images
-plantuml -tsvg docs/*.puml
+plantuml -tsvg docs/PlantUML/*.puml
 ```
 
 ### Online Viewing
