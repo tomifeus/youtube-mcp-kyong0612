@@ -206,54 +206,54 @@ docker-push: ## Push Docker image to registry
 ##@ Docker Compose
 
 .PHONY: up
-up: ## Start all services with docker-compose
+up: ## Start all services with docker compose
 	@echo "$(GREEN)Starting services...$(NC)"
-	docker-compose up -d
+	docker compose up -d
 
 .PHONY: up-build
-up-build: ## Build and start services with docker-compose
+up-build: ## Build and start services with docker compose
 	@echo "$(GREEN)Building and starting services...$(NC)"
-	docker-compose up -d --build
+	docker compose up -d --build
 
 .PHONY: down
-down: ## Stop all services with docker-compose
+down: ## Stop all services with docker compose
 	@echo "$(YELLOW)Stopping services...$(NC)"
-	docker-compose down
+	docker compose down
 
 .PHONY: down-volumes
 down-volumes: ## Stop services and remove volumes
 	@echo "$(YELLOW)Stopping services and removing volumes...$(NC)"
-	docker-compose down -v
+	docker compose down -v
 
 .PHONY: restart
 restart: ## Restart all services
 	@echo "$(GREEN)Restarting services...$(NC)"
-	docker-compose restart
+	docker compose restart
 
 .PHONY: logs
 logs: ## Show logs from all services
 	@echo "$(GREEN)Showing logs...$(NC)"
-	docker-compose logs -f
+	docker compose logs -f
 
 .PHONY: logs-app
 logs-app: ## Show logs from app service only
 	@echo "$(GREEN)Showing app logs...$(NC)"
-	docker-compose logs -f youtube-transcript-mcp
+	docker compose logs -f youtube-transcript-mcp
 
 .PHONY: ps
 ps: ## Show running services
 	@echo "$(GREEN)Running services:$(NC)"
-	docker-compose ps
+	docker compose ps
 
 .PHONY: up-redis
 up-redis: ## Start with Redis profile
 	@echo "$(GREEN)Starting with Redis...$(NC)"
-	docker-compose --profile with-redis up -d
+	docker compose --profile with-redis up -d
 
 .PHONY: up-monitoring
 up-monitoring: ## Start with monitoring profile
 	@echo "$(GREEN)Starting with monitoring...$(NC)"
-	docker-compose --profile monitoring up -d
+	docker compose --profile monitoring up -d
 
 ##@ Environment
 

@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # Install git and ca-certificates for HTTPS requests
 RUN apk add --no-cache git ca-certificates tzdata
@@ -25,7 +25,7 @@ COPY . .
 # Build the application
 # CGO_ENABLED=0 for static binary
 # -ldflags for smaller binary and version injection
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build \
     -ldflags="-w -s -X main.Version=1.0.0 -X main.BuildTime=$(date -u '+%Y-%m-%d_%H:%M:%S') -X main.GitCommit=$(git rev-parse --short HEAD 2>/dev/null || echo 'unknown')" \
     -a -installsuffix cgo \
     -o youtube-transcript-mcp \
