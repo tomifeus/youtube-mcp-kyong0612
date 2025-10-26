@@ -1,20 +1,20 @@
 # MCP Client Setup Guide
 
-このドキュメントでは、YouTube Transcript MCP ServerをClaude Desktop、Claude Code、CursorなどのMCPクライアントから使用する方法を説明します。
+This document explains how to use the YouTube Transcript MCP Server with MCP clients such as Claude Desktop, Claude Code, and Cursor.
 
-## Claude Desktop での設定
+## Claude Desktop Configuration
 
-### 1. 設定ファイルの場所
+### 1. Configuration File Location
 
-Claude Desktopの設定ファイルは以下の場所にあります：
+Claude Desktop's configuration file is located at:
 
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 - **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
-### 2. 設定方法
+### 2. Configuration Methods
 
-#### 方法1: Go実行環境がある場合
+#### Method 1: With Go Runtime Environment
 
 ```json
 {
@@ -32,18 +32,18 @@ Claude Desktopの設定ファイルは以下の場所にあります：
 }
 ```
 
-**注意**: Claude DesktopにはSTDIOモードのMCPサーバー（`cmd/mcp/main.go`）が必要です。HTTPサーバー（`cmd/server/main.go`）ではありません。
+**Note**: Claude Desktop requires an STDIO mode MCP server (`cmd/mcp/main.go`), not the HTTP server (`cmd/server/main.go`).
 
-#### 方法2: ビルド済みバイナリを使用する場合
+#### Method 2: Using Pre-built Binary
 
-まず、STDIOモード用のバイナリをビルドします：
+First, build the STDIO mode binary:
 
 ```bash
 cd /path/to/youtube-mcp
 go build -o youtube-mcp-stdio ./cmd/mcp/
 ```
 
-その後、設定ファイルに追加：
+Then add to the configuration file:
 
 ```json
 {
@@ -60,7 +60,7 @@ go build -o youtube-mcp-stdio ./cmd/mcp/
 }
 ```
 
-#### 方法3: Dockerを使用する場合
+#### Method 3: Using Docker
 
 ```json
 {
@@ -80,19 +80,19 @@ go build -o youtube-mcp-stdio ./cmd/mcp/
 }
 ```
 
-### 3. 環境変数の設定
+### 3. Environment Variable Configuration
 
-重要な環境変数：
+Important environment variables:
 
-- `YOUTUBE_DEFAULT_LANGUAGES`: デフォルトの字幕言語（カンマ区切り）
-- `CACHE_ENABLED`: キャッシュの有効/無効
-- `LOG_LEVEL`: ログレベル（debug, info, warn, error）
-- `YOUTUBE_REQUEST_TIMEOUT`: リクエストタイムアウト
-- `YOUTUBE_RATE_LIMIT_PER_MINUTE`: 分あたりのリクエスト上限
+- `YOUTUBE_DEFAULT_LANGUAGES`: Default subtitle languages (comma-separated)
+- `CACHE_ENABLED`: Enable/disable caching
+- `LOG_LEVEL`: Log level (debug, info, warn, error)
+- `YOUTUBE_REQUEST_TIMEOUT`: Request timeout
+- `YOUTUBE_RATE_LIMIT_PER_MINUTE`: Rate limit per minute
 
-### 4. 高度な設定
+### 4. Advanced Configuration
 
-プロキシを使用する場合：
+Using proxy:
 
 ```json
 {
@@ -109,7 +109,7 @@ go build -o youtube-mcp-stdio ./cmd/mcp/
 }
 ```
 
-認証を有効にする場合：
+Enabling authentication:
 
 ```json
 {
@@ -125,13 +125,13 @@ go build -o youtube-mcp-stdio ./cmd/mcp/
 }
 ```
 
-## Claude Code での設定
+## Claude Code Configuration
 
-Claude Code（claude.ai/code）はMCPサーバーを自動的に検出します。
+Claude Code (claude.ai/code) automatically detects MCP servers.
 
-### 1. 設定方法
+### 1. Configuration Methods
 
-#### 方法1: Go実行環境を使用
+#### Method 1: Using Go Runtime Environment
 
 ```json
 {
@@ -149,10 +149,10 @@ Claude Code（claude.ai/code）はMCPサーバーを自動的に検出します�
 }
 ```
 
-#### 方法2: コンパイル済みバイナリを使用
+#### Method 2: Using Pre-compiled Binary
 
 ```bash
-# まずバイナリをビルド
+# First build the binary
 cd /path/to/youtube-mcp
 make build
 ```
@@ -171,23 +171,23 @@ make build
 }
 ```
 
-### 2. Claude Codeの特徴
+### 2. Claude Code Features
 
-- MCPサーバーの自動検出と統合
-- リアルタイムでの字幕取得と処理
-- 複数の動画を並行処理可能
+- Automatic MCP server detection and integration
+- Real-time subtitle fetching and processing
+- Parallel processing of multiple videos
 
-## Cursor での設定
+## Cursor Configuration
 
-CursorはMCPサーバーをサポートしています。
+Cursor supports MCP servers.
 
-### 1. 設定方法
+### 1. Configuration Method
 
-1. Cursorの設定を開く（macOS: `Cmd+,`、Windows/Linux: `Ctrl+,`）
-2. "MCP"または"Model Context Protocol"を検索
-3. 以下の設定を追加：
+1. Open Cursor settings (macOS: `Cmd+,`, Windows/Linux: `Ctrl+,`)
+2. Search for "MCP" or "Model Context Protocol"
+3. Add the following configuration:
 
-#### Go実行環境を使用する場合
+#### Using Go Runtime Environment
 
 ```json
 {
@@ -205,7 +205,7 @@ CursorはMCPサーバーをサポートしています。
 }
 ```
 
-#### コンパイル済みバイナリを使用する場合
+#### Using Pre-compiled Binary
 
 ```json
 {
@@ -221,80 +221,80 @@ CursorはMCPサーバーをサポートしています。
 }
 ```
 
-### 2. Cursorでの活用例
+### 2. Cursor Use Cases
 
-- コードコメントに動画の内容を自動追加
-- チュートリアル動画からコードスニペットを抽出
-- 技術解説動画の要約をドキュメントに反映
+- Automatically add video content to code comments
+- Extract code snippets from tutorial videos
+- Reflect technical explanation video summaries in documentation
 
-## 使用方法
+## Usage
 
-MCPクライアント（Claude Desktop、Claude Code、Cursor）を再起動後、以下のツールが利用可能になります：
+After restarting MCP clients (Claude Desktop, Claude Code, Cursor), the following tools will be available:
 
-### 1. 動画の字幕を取得
+### 1. Get Video Subtitles
 
 ```text
-YouTubeの動画 https://www.youtube.com/watch?v=VIDEO_ID の字幕を日本語で取得してください
+Please get the subtitles in Japanese for this YouTube video: https://www.youtube.com/watch?v=VIDEO_ID
 ```
 
-### 2. 複数動画の字幕を一括取得
+### 2. Batch Get Multiple Video Subtitles
 
 ```text
-以下の動画の字幕をすべて取得してください：
+Please get subtitles for all of the following videos:
 - https://www.youtube.com/watch?v=VIDEO_ID1
 - https://www.youtube.com/watch?v=VIDEO_ID2
 ```
 
-### 3. 字幕を翻訳
+### 3. Translate Subtitles
 
 ```text
-この動画の字幕を英語から日本語に翻訳してください：
+Please translate the subtitles for this video from English to Japanese:
 https://www.youtube.com/watch?v=VIDEO_ID
 ```
 
-### 4. 利用可能な言語を確認
+### 4. Check Available Languages
 
 ```text
-この動画で利用可能な字幕言語を教えてください：
+Please tell me what subtitle languages are available for this video:
 https://www.youtube.com/watch?v=VIDEO_ID
 ```
 
-### 5. 字幕をSRT形式で取得
+### 5. Get Subtitles in SRT Format
 
 ```text
-この動画の字幕をSRT形式で取得してください：
+Please get the subtitles for this video in SRT format:
 https://www.youtube.com/watch?v=VIDEO_ID
 ```
 
-## トラブルシューティング
+## Troubleshooting
 
-### サーバーが起動しない
+### Server Won't Start
 
-1. Goがインストールされているか確認：
+1. Check if Go is installed:
    ```bash
    go version
    ```
 
-2. 依存関係がインストールされているか確認：
+2. Check if dependencies are installed:
    ```bash
    cd /path/to/youtube-mcp
    make deps
    ```
 
-3. ポートが使用されていないか確認：
+3. Check if port is not in use:
    ```bash
    lsof -i :8080
    ```
 
-### 字幕が取得できない
+### Cannot Get Subtitles
 
-1. 動画に字幕が存在するか確認
-2. プライベート動画や地域制限がないか確認
-3. レート制限に引っかかっていないか確認
+1. Check if the video has subtitles
+2. Check if it's not a private video or region-restricted
+3. Check if you're not hitting rate limits
 
-### ログの確認
+### Log Checking
 
-デバッグログを有効にする：
+Enable debug logging:
 
 ```json
 {
@@ -309,16 +309,16 @@ https://www.youtube.com/watch?v=VIDEO_ID
 }
 ```
 
-## セキュリティに関する注意
+## Security Notes
 
-- APIキーを使用する場合は、環境変数に直接記載せず、`.env`ファイルを使用することを推奨
-- プロキシを使用する場合は、信頼できるプロキシサービスを使用すること
-- YouTubeの利用規約を遵守すること
+- When using API keys, use `.env` files instead of directly writing them in environment variables
+- When using proxies, use trusted proxy services
+- Comply with YouTube's Terms of Service
 
-## サポート
+## Support
 
-問題が発生した場合は、以下を確認してください：
+If you encounter issues, please check:
 
-1. [README.md](../README.md) - 基本的な使用方法
-2. [GitHub Issues](https://github.com/yourusername/youtube-transcript-mcp/issues) - 既知の問題
-3. ログファイル - デバッグ情報の確認
+1. [README.md](../README.md) - Basic usage instructions
+2. [GitHub Issues](https://github.com/yourusername/youtube-transcript-mcp/issues) - Known issues
+3. Log files - Debug information

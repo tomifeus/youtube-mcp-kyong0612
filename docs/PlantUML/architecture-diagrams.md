@@ -151,10 +151,10 @@ graph TD
 
 ## 📚 Additional Documentation
 
-- [Development Guide](development-guide.md): Setup and development workflow
-- [Implementation Status](implementation-status.md): Feature completion status
-- [Requirements](requirements.md): Original requirements and specifications
-- [MCP Client Setup](mcp-client-setup.md): Client configuration guide
+- [Development Guide](../development-guide.md): Setup and development workflow
+- [Implementation Status](../implementation-status.md): Feature completion status
+- [Requirements](../requirements.md): Original requirements and specifications
+- [MCP Client Setup](../mcp-client-setup.md): Client configuration guide
 
 ## 🤝 Contributing
 

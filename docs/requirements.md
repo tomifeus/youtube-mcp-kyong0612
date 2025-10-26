@@ -1,108 +1,108 @@
-# YouTube Transcript MCP Server - 完全実装ガイド
+# YouTube Transcript MCP Server - Complete Implementation Guide
 
-YouTube動画のトランスクリプト（字幕）を取得するModel Context Protocol (MCP) サーバーのGolang実装です。
+A Golang implementation of a Model Context Protocol (MCP) server for fetching YouTube video transcripts (subtitles).
 
-## 📋 目次
+## 📋 Table of Contents
 
-1. [プロジェクト概要](#プロジェクト概要)
-2. [仕様書](#仕様書)
-3. [実装コード](#実装コード)
-4. [設定ファイル](#設定ファイル)
-5. [インストールと実行](#インストールと実行)
-6. [使用方法](#使用方法)
-7. [トラブルシューティング](#トラブルシューティング)
+1. [Project Overview](#project-overview)
+2. [Specifications](#specifications)
+3. [Implementation Code](#implementation-code)
+4. [Configuration Files](#configuration-files)
+5. [Installation and Execution](#installation-and-execution)
+6. [Usage](#usage)
+7. [Troubleshooting](#troubleshooting)
 
 ---
 
-## プロジェクト概要
+## Project Overview
 
-### 🚀 特徴
+### 🚀 Features
 
-- **高速**: Golang実装による高性能処理
-- **MCP準拠**: Model Context Protocol 2024-11-05 対応
-- **多言語対応**: 複数言語の字幕取得・翻訳機能
-- **Docker対応**: コンテナでの簡単デプロイ
-- **キャッシュ機能**: 高速レスポンスのためのインメモリキャッシュ
-- **エラーハンドリング**: 堅牢なエラー処理とリトライ機能
-- **監視機能**: ヘルスチェック・メトリクス対応
+- **High Performance**: High-speed processing with Golang implementation
+- **MCP Compliant**: Model Context Protocol 2024-11-05 support
+- **Multi-language Support**: Multi-language subtitle fetching and translation
+- **Docker Ready**: Easy deployment with containers
+- **Caching**: In-memory cache for fast responses
+- **Error Handling**: Robust error handling and retry functionality
+- **Monitoring**: Health checks and metrics support
 
-### 📋 必要条件
+### 📋 Requirements
 
-- Go 1.21 以上
+- Go 1.21 or higher
 - Docker & Docker Compose
-- インターネット接続
+- Internet connection
 
-### 🔧 技術的特徴
+### 🔧 Technical Features
 
-- **構造化ログ**: Go 1.21+の標準ライブラリ`log/slog`を使用した高性能な構造化ログ
-- **JSON出力**: 本番環境でのログ解析とモニタリングに最適化
-- **高性能ルーティング**: go-chi/chiによる軽量で高速なHTTPルーター
-- **ミドルウェア**: リクエストID生成、パニック回復機能を内蔵
-
----
-
-## 仕様書
-
-### 1. プロジェクト概要
-
-#### 1.1 目的
-Model Context Protocol (MCP) を使用して、YouTubeの動画トランスクリプトを取得・処理するサーバーを開発し、AIアシスタントが動画の内容にアクセスできるようにする。
-
-#### 1.2 スコープ
-- YouTubeの動画URLまたは動画IDからトランスクリプトを抽出
-- 複数言語対応（自動生成・手動作成字幕）
-- トランスクリプトの翻訳機能
-- メタデータの取得
-- テキスト処理・要約機能
-
-### 2. 機能要件
-
-#### 2.1 コア機能
-
-##### 2.1.1 トランスクリプト取得機能
-- **機能名**: `get_transcript`
-- **説明**: YouTube動画のトランスクリプトを取得
-- **入力**: 動画URL、動画ID、または動画URLリスト
-- **出力**: 構造化されたトランスクリプトデータ
-
-##### 2.1.2 言語指定機能
-- **機能名**: `get_transcript_with_language`
-- **説明**: 指定した言語でトランスクリプトを取得
-- **入力**: 動画識別子 + 言語コード
-- **出力**: 指定言語のトランスクリプト
-
-##### 2.1.3 翻訳機能
-- **機能名**: `translate_transcript`
-- **説明**: 取得したトランスクリプトを指定言語に翻訳
-- **入力**: トランスクリプトデータ + ターゲット言語
-- **出力**: 翻訳されたトランスクリプト
-
-##### 2.1.4 利用可能言語リスト取得
-- **機能名**: `list_available_languages`
-- **説明**: 動画で利用可能な字幕言語を取得
-- **入力**: 動画識別子
-- **出力**: 言語コードと言語名のリスト
-
-##### 2.1.5 バッチ処理機能
-- **機能名**: `get_multiple_transcripts`
-- **説明**: 複数動画のトランスクリプトを一括取得
-- **入力**: 動画識別子リスト
-- **出力**: 動画別トランスクリプトデータ
-
-### 3. 技術要件
-
-#### 3.1 開発環境
-- **言語**: Go 1.21+
-- **主要ライブラリ**:
-  - `net/http` (HTTP通信)
-  - `encoding/json` (JSON処理)
-  - `github.com/go-chi/chi/v5` (ルーティング)
-  - `log/slog` (ログ管理)
-  - `github.com/go-playground/validator` (データ検証)
+- **Structured Logging**: High-performance structured logging using Go 1.21+ standard library `log/slog`
+- **JSON Output**: Optimized for log analysis and monitoring in production
+- **High-Performance Routing**: Lightweight and fast HTTP router using go-chi/chi
+- **Middleware**: Built-in request ID generation and panic recovery
 
 ---
 
-## 実装コード
+## Specifications
+
+### 1. Project Overview
+
+#### 1.1 Purpose
+Develop a server for fetching and processing YouTube video transcripts using Model Context Protocol (MCP), enabling AI assistants to access video content.
+
+#### 1.2 Scope
+- Extract transcripts from YouTube video URLs or video IDs
+- Multi-language support (auto-generated and manually created subtitles)
+- Transcript translation functionality
+- Metadata retrieval
+- Text processing and summarization features
+
+### 2. Functional Requirements
+
+#### 2.1 Core Functions
+
+##### 2.1.1 Transcript Fetching Function
+- **Function Name**: `get_transcript`
+- **Description**: Fetch YouTube video transcripts
+- **Input**: Video URL, video ID, or video URL list
+- **Output**: Structured transcript data
+
+##### 2.1.2 Language Specification Function
+- **Function Name**: `get_transcript_with_language`
+- **Description**: Fetch transcripts in specified language
+- **Input**: Video identifier + language code
+- **Output**: Transcript in specified language
+
+##### 2.1.3 Translation Function
+- **Function Name**: `translate_transcript`
+- **Description**: Translate fetched transcript to specified language
+- **Input**: Transcript data + target language
+- **Output**: Translated transcript
+
+##### 2.1.4 Available Languages List
+- **Function Name**: `list_available_languages`
+- **Description**: Get available subtitle languages for a video
+- **Input**: Video identifier
+- **Output**: List of language codes and names
+
+##### 2.1.5 Batch Processing Function
+- **Function Name**: `get_multiple_transcripts`
+- **Description**: Batch fetch transcripts for multiple videos
+- **Input**: List of video identifiers
+- **Output**: Transcript data by video
+
+### 3. Technical Requirements
+
+#### 3.1 Development Environment
+- **Language**: Go 1.21+
+- **Main Libraries**:
+  - `net/http` (HTTP communication)
+  - `encoding/json` (JSON processing)
+  - `github.com/go-chi/chi/v5` (routing)
+  - `log/slog` (log management)
+  - `github.com/go-playground/validator` (data validation)
+
+---
+
+## Implementation Code
 
 ### 1. main.go
 
@@ -129,13 +129,13 @@ import (
 )
 
 func main() {
-	// 設定読み込み
+	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// ログレベル設定
+	// Set log level
 	var logLevel slog.Level
 	switch cfg.LogLevel {
 	case "debug":
@@ -150,20 +150,20 @@ func main() {
 		logLevel = slog.LevelInfo
 	}
 
-	// 構造化ログハンドラー設定
+	// Configure structured log handler
 	opts := &slog.HandlerOptions{
 		Level: logLevel,
 	}
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, opts))
 	slog.SetDefault(logger)
 
-	// YouTube transcript service 初期化
+	// Initialize YouTube transcript service
 	youtubeService := youtube.NewService(cfg.YouTube)
 
-	// MCP server 初期化
+	// Initialize MCP server
 	mcpServer := mcp.NewServer(youtubeService, cfg.MCP)
 
-	// HTTP router 設定
+	// Configure HTTP router
 	router := chi.NewRouter()
 	
 	// Middleware
@@ -185,7 +185,7 @@ func main() {
 		// Future API endpoints can be added here
 	})
 
-	// HTTP server 設定
+	// Configure HTTP server
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Port),
 		Handler:      router,
@@ -194,7 +194,7 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// Graceful shutdown 設定
+	// Configure graceful shutdown
 	go func() {
 		slog.Info("Starting YouTube Transcript MCP Server", "port", cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -203,7 +203,7 @@ func main() {
 		}
 	}()
 
-	// シグナル待機
+	// Wait for signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -1462,24 +1462,24 @@ func (s *Server) getAvailableTools() []models.MCPTool {
 	if s.config.Tools[models.ToolGetTranscript] {
 		tools = append(tools, models.MCPTool{
 			Name:        models.ToolGetTranscript,
-			Description: "YouTube動画のトランスクリプトを取得します",
+			Description: "Fetch YouTube video transcripts",
 			InputSchema: map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
 					"video_identifier": map[string]interface{}{
 						"type":        "string",
-						"description": "YouTube動画URL、動画ID、またはURLのいずれか",
+						"description": "YouTube video URL, video ID, or URL",
 					},
 					"languages": map[string]interface{}{
 						"type": "array",
 						"items": map[string]interface{}{
 							"type": "string",
 						},
-						"description": "優先言語コードリスト（例: ['ja', 'en']）",
+						"description": "Priority language code list (e.g., ['ja', 'en'])",
 					},
 					"preserve_formatting": map[string]interface{}{
 						"type":        "boolean",
-						"description": "タイムスタンプなどの元の書式を保持するか",
+						"description": "Whether to preserve original formatting like timestamps",
 					},
 				},
 				"required": []string{"video_identifier"},
@@ -1490,7 +1490,7 @@ func (s *Server) getAvailableTools() []models.MCPTool {
 	if s.config.Tools[models.ToolGetMultipleTranscripts] {
 		tools = append(tools, models.MCPTool{
 			Name:        models.ToolGetMultipleTranscripts,
-			Description: "複数のYouTube動画のトランスクリプトを一括取得します",
+			Description: "Batch fetch transcripts for multiple YouTube videos",
 			InputSchema: map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
@@ -1499,18 +1499,18 @@ func (s *Server) getAvailableTools() []models.MCPTool {
 						"items": map[string]interface{}{
 							"type": "string",
 						},
-						"description": "動画識別子のリスト",
+						"description": "List of video identifiers",
 					},
 					"languages": map[string]interface{}{
 						"type": "array",
 						"items": map[string]interface{}{
 							"type": "string",
 						},
-						"description": "優先言語コードリスト",
+						"description": "Priority language code list",
 					},
 					"continue_on_error": map[string]interface{}{
 						"type":        "boolean",
-						"description": "エラー発生時も他の動画の処理を継続するか",
+						"description": "Whether to continue processing other videos when an error occurs",
 					},
 				},
 				"required": []string{"video_identifiers"},
@@ -1521,21 +1521,21 @@ func (s *Server) getAvailableTools() []models.MCPTool {
 	if s.config.Tools[models.ToolTranslateTranscript] {
 		tools = append(tools, models.MCPTool{
 			Name:        models.ToolTranslateTranscript,
-			Description: "トランスクリプトを指定言語に翻訳します",
+			Description: "Translate transcript to specified language",
 			InputSchema: map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
 					"video_identifier": map[string]interface{}{
 						"type":        "string",
-						"description": "YouTube動画識別子",
+						"description": "YouTube video identifier",
 					},
 					"target_language": map[string]interface{}{
 						"type":        "string",
-						"description": "翻訳先言語コード（例: 'ja', 'en'）",
+						"description": "Target language code (e.g., 'ja', 'en')",
 					},
 					"source_language": map[string]interface{}{
 						"type":        "string",
-						"description": "元言語コード（省略時は自動検出）",
+						"description": "Source language code (auto-detected if omitted)",
 					},
 				},
 				"required": []string{"video_identifier", "target_language"},
@@ -1546,22 +1546,22 @@ func (s *Server) getAvailableTools() []models.MCPTool {
 	if s.config.Tools[models.ToolFormatTranscript] {
 		tools = append(tools, models.MCPTool{
 			Name:        models.ToolFormatTranscript,
-			Description: "トランスクリプトを読みやすい形式に整形します",
+			Description: "Format transcript into readable format",
 			InputSchema: map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
 					"video_identifier": map[string]interface{}{
 						"type":        "string",
-						"description": "YouTube動画識別子",
+						"description": "YouTube video identifier",
 					},
 					"format_type": map[string]interface{}{
 						"type":        "string",
 						"enum":        []string{"plain_text", "paragraphs", "sentences", "json"},
-						"description": "出力フォーマット形式",
+						"description": "Output format type",
 					},
 					"include_timestamps": map[string]interface{}{
 						"type":        "boolean",
-						"description": "タイムスタンプを含めるか",
+						"description": "Whether to include timestamps",
 					},
 				},
 				"required": []string{"video_identifier"},
@@ -1572,13 +1572,13 @@ func (s *Server) getAvailableTools() []models.MCPTool {
 	if s.config.Tools[models.ToolListLanguages] {
 		tools = append(tools, models.MCPTool{
 			Name:        models.ToolListLanguages,
-			Description: "動画で利用可能な字幕言語を取得します",
+			Description: "Get available subtitle languages for a video",
 			InputSchema: map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
 					"video_identifier": map[string]interface{}{
 						"type":        "string",
-						"description": "YouTube動画識別子",
+						"description": "YouTube video identifier",
 					},
 				},
 				"required": []string{"video_identifier"},
@@ -1618,7 +1618,7 @@ func (s *Server) sendError(w http.ResponseWriter, id interface{}, code int, mess
 
 ---
 
-## 設定ファイル
+## Configuration Files
 
 ### 1. go.mod
 
@@ -2084,80 +2084,80 @@ release-build: ## Build release version
 
 ---
 
-## インストールと実行
+## Installation and Execution
 
-### 🛠️ セットアップ手順
+### 🛠️ Setup Steps
 
-1. **プロジェクト作成**
+1. **Project Creation**
 ```bash
-# ディレクトリ作成
+# Create directory
 mkdir youtube-transcript-mcp
 cd youtube-transcript-mcp
 
-# 上記のファイルを保存
-# main.go, internal/ ディレクトリ構造, Dockerfile, 他設定ファイル
+# Save the above files
+# main.go, internal/ directory structure, Dockerfile, other configuration files
 ```
 
-2. **環境設定**
+2. **Environment Setup**
 ```bash
-# 環境変数ファイル作成
+# Create environment variable file
 make env-setup
 
-# 必要に応じて .env ファイルを編集
+# Edit .env file as needed
 vim .env
 ```
 
-3. **依存関係インストール**
+3. **Install Dependencies**
 ```bash
 make deps
 ```
 
-### 🚀 実行方法
+### 🚀 Execution Methods
 
-#### Docker Compose（推奨）
+#### Docker Compose (Recommended)
 ```bash
-# サービス開始
+# Start services
 make up
 
-# ログ確認
+# Check logs
 make logs
 
-# サービス停止
+# Stop services
 make down
 ```
 
-#### ローカル実行
+#### Local Execution
 ```bash
-# ビルド
+# Build
 make build
 
-# 実行
+# Run
 make run
 ```
 
-#### 開発モード
+#### Development Mode
 ```bash
-# ホットリロード付きで実行
+# Run with hot reload
 make dev
 ```
 
 ---
 
-## 使用方法
+## Usage
 
-### 📡 基本API
+### 📡 Basic API
 
-#### ヘルスチェック
+#### Health Check
 ```bash
 curl http://localhost:8080/health
 ```
 
-#### レディネスチェック
+#### Readiness Check
 ```bash
 curl http://localhost:8080/ready
 ```
 
-#### MCP ツール一覧
+#### MCP Tools List
 ```bash
 curl -X POST http://localhost:8080/mcp \
   -H "Content-Type: application/json" \
@@ -2168,9 +2168,9 @@ curl -X POST http://localhost:8080/mcp \
   }'
 ```
 
-### 🔧 MCP ツール使用例
+### 🔧 MCP Tool Usage Examples
 
-#### 1. トランスクリプト取得
+#### 1. Transcript Fetching
 ```bash
 curl -X POST http://localhost:8080/mcp \
   -H "Content-Type: application/json" \
@@ -2189,7 +2189,7 @@ curl -X POST http://localhost:8080/mcp \
   }'
 ```
 
-#### 2. 複数動画処理
+#### 2. Multiple Video Processing
 ```bash
 curl -X POST http://localhost:8080/mcp \
   -H "Content-Type: application/json" \
@@ -2211,7 +2211,7 @@ curl -X POST http://localhost:8080/mcp \
   }'
 ```
 
-#### 3. 翻訳機能
+#### 3. Translation Function
 ```bash
 curl -X POST http://localhost:8080/mcp \
   -H "Content-Type: application/json" \
@@ -2230,7 +2230,7 @@ curl -X POST http://localhost:8080/mcp \
   }'
 ```
 
-#### 4. 整形機能
+#### 4. Formatting Function
 ```bash
 curl -X POST http://localhost:8080/mcp \
   -H "Content-Type: application/json" \
@@ -2249,7 +2249,7 @@ curl -X POST http://localhost:8080/mcp \
   }'
 ```
 
-#### 5. 利用可能言語
+#### 5. Available Languages
 ```bash
 curl -X POST http://localhost:8080/mcp \
   -H "Content-Type: application/json" \
@@ -2266,89 +2266,89 @@ curl -X POST http://localhost:8080/mcp \
   }'
 ```
 
-### 🧪 テスト
+### 🧪 Testing
 
 ```bash
-# 単体テスト
+# Unit tests
 make test
 
-# 統合テスト
+# Integration tests
 make test-integration
 
-# API テスト（サーバー起動中）
+# API tests (with server running)
 make test-api
 
-# カバレッジ付きテスト
+# Tests with coverage
 make test-coverage
 ```
 
-### 🔍 開発・デバッグ
+### 🔍 Development & Debugging
 
 ```bash
-# コード品質
+# Code quality
 make fmt
 make lint
 make security-scan
 
-# デバッグ
-make docker-shell  # コンテナ内シェル
-make logs          # ログ確認
-make status        # ステータス確認
+# Debugging
+make docker-shell  # Container shell
+make logs          # Check logs
+make status        # Check status
 ```
 
 ---
 
-## トラブルシューティング
+## Troubleshooting
 
-### ❗ よくある問題
+### ❗ Common Issues
 
-#### 1. "No transcript found" エラー
-- 動画に字幕が存在しない可能性
-- プライベート動画で取得不可
-- 地域制限で利用不可能
+#### 1. "No transcript found" Error
+- Video may not have subtitles
+- Cannot fetch from private videos
+- Not available due to regional restrictions
 
-#### 2. "Rate limit exceeded" エラー
+#### 2. "Rate limit exceeded" Error
 ```bash
-# 設定調整
+# Adjust settings
 export YOUTUBE_RATE_LIMIT_PER_HOUR=500
 make restart
 ```
 
-#### 3. コンテナが起動しない
+#### 3. Container Won't Start
 ```bash
-# ログ確認
+# Check logs
 make logs
 
-# 設定確認
+# Check configuration
 make env-check
 
-# ポート競合確認
+# Check port conflicts
 sudo netstat -tulpn | grep :8080
 ```
 
-#### 4. パフォーマンス問題
+#### 4. Performance Issues
 ```bash
-# デバッグログ有効化
+# Enable debug logging
 export LOG_LEVEL=debug
 make restart
 
-# リソース監視
+# Monitor resources
 docker stats youtube-transcript-mcp
 ```
 
-### 🔧 設定調整
+### 🔧 Configuration Adjustments
 
-#### キャッシュ設定
+#### Cache Settings
 ```bash
-# キャッシュ無効化
+# Disable cache
 export CACHE_ENABLED=false
 
-# TTL調整
+# Adjust TTL
 export CACHE_TRANSCRIPT_TTL=1h
 export CACHE_METADATA_TTL=30m
 ```
 
-#### 同時接続数調整
+#### Concurrent Connection Adjustment
 ```bash
 export MCP_MAX_CONCURRENT=20
 export YOUTUBE_RETRY_ATTEMPTS=5
@@ -2356,51 +2356,51 @@ export YOUTUBE_RETRY_ATTEMPTS=5
 
 ---
 
-## 🎯 重要な注意事項
+## 🎯 Important Notes
 
-### ⚠️ 現在の制限
+### ⚠️ Current Limitations
 
-1. **YouTube transcript 取得はモック実装**
-   - 実際のYouTube API統合が必要
-   - HTMLパース・JavaScript実行の実装要
+1. **YouTube transcript fetching is mock implementation**
+   - Actual YouTube API integration required
+   - HTML parsing and JavaScript execution implementation needed
    
-2. **推奨次ステップ**
-   - `youtube-transcript-api`相当のGo実装
-   - ブラウザ自動化（Playwright等）統合
-   - プロキシローテーション対応
+2. **Recommended Next Steps**
+   - Go implementation equivalent to `youtube-transcript-api`
+   - Browser automation integration (Playwright, etc.)
+   - Proxy rotation support
 
-### 📝 カスタマイズ
+### 📝 Customization
 
-#### 実YouTube API統合
-`internal/youtube/service.go`の`fetchTranscript`関数を実装：
+#### Real YouTube API Integration
+Implement the `fetchTranscript` function in `internal/youtube/service.go`:
 
 ```go
 func (s *Service) fetchTranscript(videoID string, languages []string) (*models.TranscriptResponse, error) {
-    // 実装:
-    // 1. YouTube動画ページ取得
-    // 2. プレイヤー設定抽出
-    // 3. 字幕トラック検索
-    // 4. トランスクリプトデータ取得
-    // 5. XML/JSONレスポンス解析
+    // Implementation:
+    // 1. Fetch YouTube video page
+    // 2. Extract player configuration
+    // 3. Search for subtitle tracks
+    // 4. Fetch transcript data
+    // 5. Parse XML/JSON response
 }
 ```
 
-#### Redis キャッシュ追加
-`docker-compose.yml`でRedisサービスのコメントアウトを解除
+#### Add Redis Cache
+Uncomment Redis service in `docker-compose.yml`
 
-#### Prometheus 監視追加
-監視設定のコメントアウトを解除してメトリクス収集開始
+#### Add Prometheus Monitoring
+Uncomment monitoring configuration to start metrics collection
 
 ---
 
-## 🚀 まとめ
+## 🚀 Summary
 
-この完全実装ガイドにより、YouTube Transcript MCP ServerのGolang版が作成できます：
+This complete implementation guide enables creation of a Golang version of the YouTube Transcript MCP Server:
 
-- ✅ **MCP Protocol 2024-11-05 完全対応**
-- ✅ **5つの主要MCPツール実装済み**
-- ✅ **Docker Container 対応**
-- ✅ **詳細な設定・運用管理**
-- ✅ **拡張可能なアーキテクチャ**
+- ✅ **Full MCP Protocol 2024-11-05 compliance**
+- ✅ **5 main MCP tools implemented**
+- ✅ **Docker Container support**
+- ✅ **Detailed configuration and operations management**
+- ✅ **Extensible architecture**
 
-実際のYouTube API統合を行うことで、完全に機能するトランスクリプト取得サーバーとして運用可能です。
+With actual YouTube API integration, it can be operated as a fully functional transcript fetching server.
